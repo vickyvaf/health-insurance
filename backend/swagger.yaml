@@ -1,0 +1,215 @@
+openapi: 3.0.0
+info:
+  title: InsureHealth API
+  description: API for Health Insurance Payment System. Incorporates Order Management, Wix Webhook handling, and Reconciliation reporting.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001
+    description: Local development server
+paths:
+  /:
+    get:
+      summary: Welcome Route
+      description: Returns a simple welcome message to verify the API is running.
+      responses:
+        "200":
+          description: Successful response
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: InsureHealth API is running! 🚀
+  /orders:
+    post:
+      summary: Create Order
+      description: Initiates a new health insurance payment order and returns a mock Wix payment URL.
+      requestBody:
+        required: true
+        description: Order details
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created successfully with Wix payment URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderCreatedResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /webhooks/wix:
+    post:
+      summary: Receive Wix Webhook
+      description: Captures payment status updates from Wix and queues them for processing to update local Order status and Double-Entry Ledger.
+      requestBody:
+        required: true
+        description: Wix Webhook Payload
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WixWebhookPayload"
+      responses:
+        "200":
+          description: Webhook received and queued successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookQueuedResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /reconciliation:
+    get:
+      summary: Generate Reconciliation Report
+      description: Generates a reconciliation report comparing Orders and Ledger Entries to find data mismatches.
+      responses:
+        "200":
+          description: Reconciliation report generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconciliationReport"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    CreateOrderRequest:
+      type: object
+      required:
+        - productId
+        - amount
+      properties:
+        productId:
+          type: integer
+          minimum: 1
+          example: 1
+        amount:
+          type: number
+          format: float
+          exclusiveMinimum: 0
+          example: 3500000
+    OrderCreatedResponse:
+      type: object
+      required:
+        - orderId
+        - wixOrderId
+        - amount
+        - status
+        - paymentUrl
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        wixOrderId:
+          type: string
+          example: WX-123456789
+        amount:
+          type: number
+          format: float
+          exclusiveMinimum: 0
+          example: 3500000
+        status:
+          type: string
+          example: PENDING
+        paymentUrl:
+          type: string
+          format: uri
+          example: https://wix.simulated-payment.com/pay/WX-123456789
+    WixWebhookPayload:
+      type: object
+      required:
+        - wixOrderId
+        - status
+        - amount
+        - timestamp
+      properties:
+        wixOrderId:
+          type: string
+          example: WX-123456789
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILED
+          example: SUCCESS
+        amount:
+          type: number
+          format: float
+          exclusiveMinimum: 0
+          example: 3500000
+        timestamp:
+          type: string
+          format: date-time
+          example: 2026-03-05T02:00:00Z
+    WebhookQueuedResponse:
+      type: object
+      required:
+        - message
+        - jobId
+      properties:
+        message:
+          type: string
+          example: Webhook received and queued
+        jobId:
+          type: string
+          example: WX-123456789
+    ReconciliationReport:
+      type: object
+      required:
+        - totalProcessed
+        - totalMismatches
+        - mismatches
+      properties:
+        totalProcessed:
+          type: integer
+          example: 10
+        totalMismatches:
+          type: integer
+          example: 2
+        mismatches:
+          type: array
+          items:
+            $ref: "#/components/schemas/MismatchItem"
+    MismatchItem:
+      type: object
+      required:
+        - wixOrderId
+        - internalAmount
+        - status
+        - reason
+      properties:
+        wixOrderId:
+          type: string
+          example: WX-123456789
+        internalAmount:
+          type: number
+          format: float
+          example: 3500000
+        status:
+          type: string
+          example: SUCCESS
+        reason:
+          type: string
+          example: Mismatch Amount
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: Internal Server Error

@@ -1,65 +1,450 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import {
+  Box,
+  Flex,
+  Grid,
+  Card,
+  Button,
+  Text,
+  Heading,
+  TextField,
+  Container,
+  Section,
+  Separator,
+  Badge,
+  Spinner,
+  Callout,
+} from "@radix-ui/themes";
+import * as Icons from "@radix-ui/react-icons";
+
+type Step = "selection" | "processing" | "success";
 
 export default function Home() {
+  const [step, setStep] = useState<Step>("selection");
+  const [selectedPlan, setSelectedPlan] = useState("Family");
+  const [isError, setIsError] = useState(false);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiryDate, setExpiryDate] = useState("");
+  const [cvv, setCvv] = useState("");
+
+  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value.replace(/[^0-9]/gi, "");
+    if (v.length <= 3) {
+      setCvv(v);
+    }
+  };
+
+  const formatCardNumber = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    const matches = v.match(/\d{4,16}/g);
+    const match = (matches && matches[0]) || "";
+    const parts = [];
+
+    for (let i = 0, len = match.length; i < len; i += 4) {
+      parts.push(match.substring(i, i + 4));
+    }
+
+    if (parts.length) {
+      return parts.join(" ");
+    } else {
+      return v;
+    }
+  };
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCardNumber(e.target.value);
+    if (formatted.length <= 19) {
+      setCardNumber(formatted);
+    }
+  };
+
+  const formatExpiryDate = (value: string) => {
+    const v = value.replace(/\s+/g, "").replace(/[^0-9]/gi, "");
+    if (v.length >= 2) {
+      return v.substring(0, 2) + "/" + v.substring(2, 4);
+    }
+    return v;
+  };
+
+  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    if (v.length < expiryDate.length) {
+      setExpiryDate(v);
+      return;
+    }
+    const formatted = formatExpiryDate(v);
+    if (formatted.length <= 5) {
+      setExpiryDate(formatted);
+    }
+  };
+
+  const plans = [
+    {
+      name: "Basic",
+      price: 750000,
+      description: "Essential coverage for individuals.",
+      icon: <Icons.PersonIcon width="24" height="24" />,
+    },
+    {
+      name: "Family",
+      price: 2250000,
+      description: "Comprehensive coverage for the whole family.",
+      popular: true,
+      icon: <Icons.FaceIcon width="24" height="24" />,
+    },
+    {
+      name: "Executive",
+      price: 7500000,
+      description: "Premium coverage with exclusive perks.",
+      icon: <Icons.StarFilledIcon width="24" height="24" />,
+    },
+  ];
+
+  const handlePay = () => {
+    setStep("processing");
+    setIsError(false);
+
+    setTimeout(() => {
+      if (Math.random() > 0.8) {
+        setIsError(true);
+      } else {
+        setStep("success");
+      }
+    }, 3000);
+  };
+
+  const selectedPlanData =
+    plans.find((p) => p.name === selectedPlan) || plans[1];
+
+  if (step === "success") {
+    return (
+      <Container size="2">
+        <Section py="9">
+          <Card size="4">
+            <Flex direction="column" align="center" gap="5" p="5">
+              <Box
+                style={{
+                  backgroundColor: "var(--green-3)",
+                  padding: "16px",
+                  borderRadius: "100%",
+                  color: "var(--green-9)",
+                }}
+              >
+                <Icons.CheckCircledIcon width="48" height="48" />
+              </Box>
+
+              <Flex direction="column" align="center" gap="2">
+                <Heading size="8" align="center">
+                  Payment Successful
+                </Heading>
+                <Text align="center" color="gray" size="3">
+                  Your payment for <strong>HealthSafe {selectedPlan}</strong>{" "}
+                  insurance has been successfully processed. Thank you for
+                  choosing us.
+                </Text>
+              </Flex>
+
+              <Card
+                variant="surface"
+                style={{ width: "100%", maxWidth: "400px" }}
+              >
+                <Flex justify="between" align="center">
+                  <Text size="2" weight="medium" color="gray">
+                    Transaction ID
+                  </Text>
+                  <Text
+                    size="2"
+                    weight="bold"
+                    style={{ fontFamily: "monospace" }}
+                  >
+                    HS-987654321
+                  </Text>
+                </Flex>
+              </Card>
+
+              <Flex direction="column" gap="3" width="100%" maxWidth="400px">
+                <Button
+                  size="3"
+                  variant="solid"
+                  highContrast
+                  style={{ width: "100%" }}
+                >
+                  <Icons.DownloadIcon />
+                  Download Receipt
+                </Button>
+                <Button
+                  size="3"
+                  variant="outline"
+                  style={{ width: "100%" }}
+                  onClick={() => setStep("selection")}
+                >
+                  Return to Dashboard
+                  <Icons.ArrowRightIcon />
+                </Button>
+              </Flex>
+            </Flex>
+          </Card>
+        </Section>
+      </Container>
+    );
+  }
+
+  if (step === "processing") {
+    return (
+      <Container size="2">
+        <Section py="9">
+          <Card size="4">
+            <Flex direction="column" align="center" gap="5">
+              <Heading size="7">Processing Payment</Heading>
+              <Text size="2" color="gray" mb="4">
+                Please do not close or refresh this window.
+              </Text>
+
+              <Flex direction="column" align="center" gap="3" py="6">
+                <Spinner size="3" />
+                <Text size="2" weight="medium">
+                  Contacting your bank...
+                </Text>
+              </Flex>
+
+              <Box width="100%" style={{ opacity: 0.5, pointerEvents: "none" }}>
+                <Flex direction="column" gap="4">
+                  <Flex direction="column" gap="2">
+                    <Text size="2" weight="bold">
+                      Card Information
+                    </Text>
+                    <TextField.Root disabled placeholder="**** **** **** 1234">
+                      <TextField.Slot>
+                        <Icons.CardStackIcon />
+                      </TextField.Slot>
+                    </TextField.Root>
+                  </Flex>
+                  <Button size="2" loading>
+                    Processing...
+                  </Button>
+                </Flex>
+              </Box>
+
+              {isError && (
+                <Box mt="6" width="100%">
+                  <Separator size="4" mb="6" />
+                  <Callout.Root color="red" variant="soft">
+                    <Callout.Icon>
+                      <Icons.ExclamationTriangleIcon />
+                    </Callout.Icon>
+                    <Callout.Text>
+                      Payment Declined. Please check your card details and try
+                      again.
+                    </Callout.Text>
+                  </Callout.Root>
+                  <Button
+                    mt="4"
+                    variant="outline"
+                    color="gray"
+                    style={{ width: "100%" }}
+                    size="2"
+                    onClick={() => {
+                      setStep("selection");
+                      setIsError(false);
+                    }}
+                  >
+                    Return to Payment Details
+                  </Button>
+                </Box>
+              )}
+            </Flex>
+          </Card>
+        </Section>
+      </Container>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <Container size="3">
+      <Section py="8">
+        <Flex direction="column" gap="8">
+          <Box>
+            <Heading size="8" mb="6">
+              Select a Plan
+            </Heading>
+            <Grid columns={{ initial: "1", md: "3" }} gap="6" align="stretch">
+              {plans.map((plan) => (
+                <Card
+                  key={plan.name}
+                  size="3"
+                  variant="surface"
+                  style={{
+                    cursor: "pointer",
+                    position: "relative",
+                    transition: "all 0.2s ease-in-out",
+                    outline:
+                      selectedPlan === plan.name
+                        ? "2px solid var(--blue-9)"
+                        : "none",
+                    outlineOffset: "2px",
+                    height: "100%",
+                    overflow: "visible",
+                  }}
+                  onClick={() => setSelectedPlan(plan.name)}
+                >
+                  <Flex direction="column" gap="4" style={{ height: "100%" }}>
+                    <Flex justify="between" align="center">
+                      <Text color="blue">{plan.icon}</Text>
+                      <Heading size="4" color="gray">
+                        {plan.name}
+                      </Heading>
+                    </Flex>
+
+                    <Flex direction="column" gap="1">
+                      <Flex align="baseline" gap="1">
+                        <Text size="7" weight="bold">
+                          Rp {plan.price.toLocaleString("id-ID")}
+                        </Text>
+                        <Text size="2" color="gray">
+                          /mo
+                        </Text>
+                      </Flex>
+                      <Text size="2" color="gray">
+                        {plan.description}
+                      </Text>
+                    </Flex>
+
+                    <Box mt="auto" pt="4">
+                      <Button
+                        size="2"
+                        variant={
+                          selectedPlan === plan.name ? "solid" : "outline"
+                        }
+                        style={{ width: "100%" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPlan(plan.name);
+                        }}
+                      >
+                        {selectedPlan === plan.name
+                          ? "Selected"
+                          : "Select Plan"}
+                      </Button>
+                    </Box>
+                  </Flex>
+                </Card>
+              ))}
+            </Grid>
+          </Box>
+
+          <Separator size="4" />
+
+          <Box>
+            <Heading size="8" mb="6">
+              Checkout Details
+            </Heading>
+            <Card size="4">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handlePay();
+                }}
+              >
+                <Flex direction="column" gap="5">
+                  <Grid columns={{ initial: "1", md: "2" }} gap="5">
+                    <Flex direction="column" gap="2">
+                      <Text size="2" weight="bold">
+                        Full Name
+                      </Text>
+                      <TextField.Root
+                        required
+                        placeholder="e.g. John Doe"
+                        size="3"
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="2">
+                      <Text size="2" weight="bold">
+                        Email Address
+                      </Text>
+                      <TextField.Root
+                        required
+                        type="email"
+                        placeholder="e.g. john@example.com"
+                        size="3"
+                      />
+                    </Flex>
+                  </Grid>
+
+                  <Flex direction="column" gap="2">
+                    <Text size="2" weight="bold">
+                      Card Number
+                    </Text>
+                    <TextField.Root
+                      required
+                      size="3"
+                      value={cardNumber}
+                      onChange={handleCardNumberChange}
+                      placeholder="0000 0000 0000 0000"
+                    >
+                      <TextField.Slot>
+                        <Icons.CardStackIcon />
+                      </TextField.Slot>
+                    </TextField.Root>
+                  </Flex>
+
+                  <Grid columns="2" gap="5">
+                    <Flex direction="column" gap="2">
+                      <Text size="2" weight="bold">
+                        Expiry Date
+                      </Text>
+                      <TextField.Root
+                        required
+                        size="3"
+                        value={expiryDate}
+                        onChange={handleExpiryDateChange}
+                        placeholder="MM/YY"
+                      />
+                    </Flex>
+                    <Flex direction="column" gap="2">
+                      <Text size="2" weight="bold">
+                        CVV
+                      </Text>
+                      <TextField.Root
+                        required
+                        size="3"
+                        value={cvv}
+                        onChange={handleCvvChange}
+                        placeholder="123"
+                        maxLength={3}
+                      />
+                    </Flex>
+                  </Grid>
+
+                  <Box pt="4">
+                    <Button size="3" style={{ width: "100%" }} type="submit">
+                      <Icons.LockClosedIcon />
+                      Pay Rp {selectedPlanData.price.toLocaleString(
+                        "id-ID",
+                      )}{" "}
+                      Now
+                    </Button>
+                  </Box>
+
+                  <Flex justify="center" align="center" gap="1">
+                    <Icons.LockClosedIcon color="gray" />
+                    <Text size="1" color="gray">
+                      Payments are secure and encrypted.
+                    </Text>
+                  </Flex>
+                </Flex>
+              </form>
+            </Card>
+          </Box>
+        </Flex>
+      </Section>
+      <Separator size="4" />
+      <Box py="6">
+        <Text align="center" size="1" color="gray" as="p">
+          Secure 256-bit SSL encryption. HealthSafe © 2024
+        </Text>
+      </Box>
+    </Container>
   );
 }

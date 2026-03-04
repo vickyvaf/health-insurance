@@ -1,10 +1,6 @@
 # 📄 Product Requirements Document (PRD)
 ## InsureHealth: Health Insurance Payment System
 
-| Project Status | Author           | Date          | Version |
-|:---------------|:-----------------|:--------------|:--------|
-| 🟢 In Progress | Development Team | March 5, 2026 | v1.1    |
-
 ---
 
 ## 1. 🎯 Overview

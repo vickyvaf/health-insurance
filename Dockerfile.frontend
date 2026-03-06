@@ -1,0 +1,22 @@
+# Dockerfile for Next.js Frontend
+FROM oven/bun:latest
+WORKDIR /app
+
+# Copy only root package file first for caching
+COPY package.json ./
+RUN bun install
+
+# Copy ONLY frontend related files/folders to avoid backend type-check issues
+COPY app/ ./app/
+COPY public/ ./public/
+COPY next.config.ts ./
+COPY tsconfig.json ./
+COPY postcss.config.mjs ./
+COPY eslint.config.mjs ./
+COPY next-env.d.ts ./
+
+# Run the build
+RUN bun run build
+
+EXPOSE 3000
+CMD ["bun", "run", "start"]

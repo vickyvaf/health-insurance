@@ -1,0 +1,25 @@
+# Multi-stage Dockerfile for Next.js Frontend
+FROM oven/bun:latest AS frontend-builder
+WORKDIR /app
+COPY package.json bun.lock ./
+RUN bun install
+COPY . .
+# Next.js build
+RUN bun run build
+
+# Start Final Image
+FROM oven/bun:latest
+WORKDIR /app
+
+# Install production dependencies if needed (optional since we'll run from source/build)
+# For now, let's just copy everything and use Bun to serve
+COPY --from=frontend-builder /app ./
+
+# Expose ports: 3000 (Next.js), 3001 (Backend API)
+EXPOSE 3000
+EXPOSE 3001
+
+# We'll use a small script or just run both processes
+# In a real production environment, you might use PM2 or separate containers
+# But for "run everything at once", we can use a simple shell command
+CMD ["sh", "-c", "bun run start & bun --cwd backend src/index.ts"]

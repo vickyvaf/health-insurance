@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.cursor
+backend/node_modules
+backend/prisma/migrations
+*.log
+.env*
+!backend/.env.example

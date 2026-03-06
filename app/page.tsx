@@ -28,6 +28,8 @@ export default function Home() {
   const [cardNumber, setCardNumber] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [cvv, setCvv] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
 
   const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value.replace(/[^0-9]/gi, "");
@@ -101,6 +103,17 @@ export default function Home() {
       icon: <Icons.StarFilledIcon width="24" height="24" />,
     },
   ];
+
+  const handleReturnToDashboard = () => {
+    setStep("selection");
+    setSelectedPlan("Family");
+    setIsError(false);
+    setCardNumber("");
+    setExpiryDate("");
+    setCvv("");
+    setFullName("");
+    setEmail("");
+  };
 
   const handlePay = () => {
     setStep("processing");
@@ -178,7 +191,7 @@ export default function Home() {
                   size="3"
                   variant="outline"
                   style={{ width: "100%" }}
-                  onClick={() => setStep("selection")}
+                  onClick={handleReturnToDashboard}
                 >
                   Return to Dashboard
                   <Icons.ArrowRightIcon />
@@ -245,10 +258,7 @@ export default function Home() {
                     color="gray"
                     style={{ width: "100%" }}
                     size="2"
-                    onClick={() => {
-                      setStep("selection");
-                      setIsError(false);
-                    }}
+                    onClick={handleReturnToDashboard}
                   >
                     Return to Payment Details
                   </Button>
@@ -357,6 +367,8 @@ export default function Home() {
                         required
                         placeholder="e.g. John Doe"
                         size="3"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
                       />
                     </Flex>
                     <Flex direction="column" gap="2">
@@ -368,6 +380,8 @@ export default function Home() {
                         type="email"
                         placeholder="e.g. john@example.com"
                         size="3"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                       />
                     </Flex>
                   </Grid>

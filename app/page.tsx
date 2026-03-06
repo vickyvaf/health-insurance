@@ -1,40 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import * as Icons from "@radix-ui/react-icons";
 import {
   Box,
+  Button,
+  Card,
+  Container,
   Flex,
   Grid,
-  Card,
-  Button,
-  Text,
   Heading,
-  TextField,
-  Container,
   Section,
   Separator,
-  Badge,
   Spinner,
-  Callout,
+  Text,
+  TextField,
 } from "@radix-ui/themes";
-import * as Icons from "@radix-ui/react-icons";
+import { useMutation } from "@tanstack/react-query";
+import { useReducer } from "react";
+import { createOrder, triggerWebhook } from "./api/client";
+import { initialState, paymentReducer } from "./reducers/payment";
 
-type Step = "selection" | "processing" | "success";
+const plans = [
+  {
+    name: "Basic",
+    price: 750000,
+    description: "Essential coverage for individuals.",
+    icon: <Icons.PersonIcon width="24" height="24" />,
+  },
+  {
+    name: "Family",
+    price: 2250000,
+    description: "Comprehensive coverage for the whole family.",
+    popular: true,
+    icon: <Icons.FaceIcon width="24" height="24" />,
+  },
+  {
+    name: "Executive",
+    price: 7500000,
+    description: "Premium coverage with exclusive perks.",
+    icon: <Icons.StarFilledIcon width="24" height="24" />,
+  },
+];
 
 export default function Home() {
-  const [step, setStep] = useState<Step>("selection");
-  const [selectedPlan, setSelectedPlan] = useState("Family");
-  const [isError, setIsError] = useState(false);
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [state, dispatch] = useReducer(paymentReducer, initialState);
+
+  const {
+    step,
+    selectedPlan,
+    cardNumber,
+    expiryDate,
+    cvv,
+    fullName,
+    email,
+    transactionId,
+  } = state;
 
   const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value.replace(/[^0-9]/gi, "");
     if (v.length <= 3) {
-      setCvv(v);
+      dispatch({ type: "SET_CVV", payload: v });
     }
   };
 
@@ -58,7 +83,7 @@ export default function Home() {
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCardNumber(e.target.value);
     if (formatted.length <= 19) {
-      setCardNumber(formatted);
+      dispatch({ type: "SET_CARD_NUMBER", payload: formatted });
     }
   };
 
@@ -73,59 +98,60 @@ export default function Home() {
   const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
     if (v.length < expiryDate.length) {
-      setExpiryDate(v);
+      dispatch({ type: "SET_EXPIRY_DATE", payload: v });
       return;
     }
     const formatted = formatExpiryDate(v);
     if (formatted.length <= 5) {
-      setExpiryDate(formatted);
+      dispatch({ type: "SET_EXPIRY_DATE", payload: formatted });
     }
   };
 
-  const plans = [
-    {
-      name: "Basic",
-      price: 750000,
-      description: "Essential coverage for individuals.",
-      icon: <Icons.PersonIcon width="24" height="24" />,
-    },
-    {
-      name: "Family",
-      price: 2250000,
-      description: "Comprehensive coverage for the whole family.",
-      popular: true,
-      icon: <Icons.FaceIcon width="24" height="24" />,
-    },
-    {
-      name: "Executive",
-      price: 7500000,
-      description: "Premium coverage with exclusive perks.",
-      icon: <Icons.StarFilledIcon width="24" height="24" />,
-    },
-  ];
-
   const handleReturnToDashboard = () => {
-    setStep("selection");
-    setSelectedPlan("Family");
-    setIsError(false);
-    setCardNumber("");
-    setExpiryDate("");
-    setCvv("");
-    setFullName("");
-    setEmail("");
+    dispatch({ type: "RESET_FORM" });
+    paymentMutation.reset();
   };
 
-  const handlePay = () => {
-    setStep("processing");
-    setIsError(false);
+  const paymentMutation = useMutation({
+    mutationFn: async () => {
+      const selectedPlanData =
+        plans.find((p) => p.name === selectedPlan) || plans[1];
+      const planIndex = plans.findIndex((p) => p.name === selectedPlan) + 1;
 
-    setTimeout(() => {
-      if (Math.random() > 0.8) {
-        setIsError(true);
-      } else {
-        setStep("success");
-      }
-    }, 3000);
+      // 1. Create Order
+      const orderData = await createOrder({
+        productId: planIndex,
+        amount: selectedPlanData.price,
+      });
+
+      // 2. Simulate Payment Provider Delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // 3. Trigger Webhook Simulation
+      await triggerWebhook({
+        wixOrderId: orderData.wixOrderId,
+        status: "SUCCESS",
+        amount: selectedPlanData.price,
+        timestamp: new Date().toISOString(),
+      });
+
+      return orderData;
+    },
+    onSuccess: (data) => {
+      dispatch({ type: "SET_TRANSACTION_ID", payload: data.orderId });
+      dispatch({ type: "SET_STEP", payload: "success" });
+    },
+    onMutate: () => {
+      dispatch({ type: "SET_STEP", payload: "processing" });
+    },
+    onError: () => {
+      dispatch({ type: "SET_STEP", payload: "error" });
+    },
+  });
+
+  const handlePay = (e: React.FormEvent) => {
+    e.preventDefault();
+    paymentMutation.mutate();
   };
 
   const selectedPlanData =
@@ -133,9 +159,13 @@ export default function Home() {
 
   if (step === "success") {
     return (
-      <Container size="2">
+      <Container size="2" p="4">
         <Section py="9">
-          <Card size="4">
+          <Card
+            size="4"
+            variant="surface"
+            className=" max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+          >
             <Flex direction="column" align="center" gap="5" p="5">
               <Box
                 style={{
@@ -163,16 +193,20 @@ export default function Home() {
                 variant="surface"
                 style={{ width: "100%", maxWidth: "400px" }}
               >
-                <Flex justify="between" align="center">
+                <Flex direction="column" align="center" gap="1">
                   <Text size="2" weight="medium" color="gray">
                     Transaction ID
                   </Text>
                   <Text
                     size="2"
                     weight="bold"
-                    style={{ fontFamily: "monospace" }}
+                    align="center"
+                    style={{
+                      fontFamily: "monospace",
+                      wordBreak: "break-all",
+                    }}
                   >
-                    HS-987654321
+                    {transactionId || "HS-987654321"}
                   </Text>
                 </Flex>
               </Card>
@@ -204,11 +238,63 @@ export default function Home() {
     );
   }
 
+  if (step === "error") {
+    return (
+      <Container size="2" p="4">
+        <Section py="9">
+          <Card
+            size="4"
+            className="max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+          >
+            <Flex direction="column" align="center" gap="5" p="5">
+              <Box
+                style={{
+                  backgroundColor: "var(--red-3)",
+                  padding: "16px",
+                  borderRadius: "100%",
+                  color: "var(--red-9)",
+                }}
+              >
+                <Icons.ExclamationTriangleIcon width="48" height="48" />
+              </Box>
+
+              <Flex direction="column" align="center" gap="2">
+                <Heading size="8" align="center" color="red">
+                  Payment Failed
+                </Heading>
+                <Text align="center" color="gray" size="3">
+                  {(paymentMutation.error as Error)?.message ||
+                    "We encountered an issue while processing your payment. Please check your details and try again."}
+                </Text>
+              </Flex>
+
+              <Box width="100%" maxWidth="400px" mt="2">
+                <Button
+                  size="3"
+                  variant="solid"
+                  color="gray"
+                  style={{ width: "100%" }}
+                  onClick={handleReturnToDashboard}
+                >
+                  <Icons.ArrowLeftIcon />
+                  Return to Payment Details
+                </Button>
+              </Box>
+            </Flex>
+          </Card>
+        </Section>
+      </Container>
+    );
+  }
+
   if (step === "processing") {
     return (
-      <Container size="2">
+      <Container size="2" p="4">
         <Section py="9">
-          <Card size="4">
+          <Card
+            size="4"
+            className="max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+          >
             <Flex direction="column" align="center" gap="5">
               <Heading size="7">Processing Payment</Heading>
               <Text size="2" color="gray" mb="4">
@@ -234,36 +320,8 @@ export default function Home() {
                       </TextField.Slot>
                     </TextField.Root>
                   </Flex>
-                  <Button size="2" loading>
-                    Processing...
-                  </Button>
                 </Flex>
               </Box>
-
-              {isError && (
-                <Box mt="6" width="100%">
-                  <Separator size="4" mb="6" />
-                  <Callout.Root color="red" variant="soft">
-                    <Callout.Icon>
-                      <Icons.ExclamationTriangleIcon />
-                    </Callout.Icon>
-                    <Callout.Text>
-                      Payment Declined. Please check your card details and try
-                      again.
-                    </Callout.Text>
-                  </Callout.Root>
-                  <Button
-                    mt="4"
-                    variant="outline"
-                    color="gray"
-                    style={{ width: "100%" }}
-                    size="2"
-                    onClick={handleReturnToDashboard}
-                  >
-                    Return to Payment Details
-                  </Button>
-                </Box>
-              )}
             </Flex>
           </Card>
         </Section>
@@ -272,8 +330,13 @@ export default function Home() {
   }
 
   return (
-    <Container size="3">
-      <Section py="8">
+    <Container size="3" p="4">
+      <Section
+        py={{
+          initial: "4",
+          md: "8",
+        }}
+      >
         <Flex direction="column" gap="8">
           <Box>
             <Heading size="8" mb="6">
@@ -297,7 +360,9 @@ export default function Home() {
                     height: "100%",
                     overflow: "visible",
                   }}
-                  onClick={() => setSelectedPlan(plan.name)}
+                  onClick={() =>
+                    dispatch({ type: "SET_SELECTED_PLAN", payload: plan.name })
+                  }
                 >
                   <Flex direction="column" gap="4" style={{ height: "100%" }}>
                     <Flex justify="between" align="center">
@@ -330,7 +395,10 @@ export default function Home() {
                         style={{ width: "100%" }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedPlan(plan.name);
+                          dispatch({
+                            type: "SET_SELECTED_PLAN",
+                            payload: plan.name,
+                          });
                         }}
                       >
                         {selectedPlan === plan.name
@@ -350,13 +418,11 @@ export default function Home() {
             <Heading size="8" mb="6">
               Checkout Details
             </Heading>
-            <Card size="4">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handlePay();
-                }}
-              >
+            <Card
+              size="4"
+              className="max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+            >
+              <form onSubmit={handlePay}>
                 <Flex direction="column" gap="5">
                   <Grid columns={{ initial: "1", md: "2" }} gap="5">
                     <Flex direction="column" gap="2">
@@ -368,7 +434,12 @@ export default function Home() {
                         placeholder="e.g. John Doe"
                         size="3"
                         value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
+                        onChange={(e) =>
+                          dispatch({
+                            type: "SET_FULL_NAME",
+                            payload: e.target.value,
+                          })
+                        }
                       />
                     </Flex>
                     <Flex direction="column" gap="2">
@@ -381,7 +452,12 @@ export default function Home() {
                         placeholder="e.g. john@example.com"
                         size="3"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) =>
+                          dispatch({
+                            type: "SET_EMAIL",
+                            payload: e.target.value,
+                          })
+                        }
                       />
                     </Flex>
                   </Grid>
@@ -456,7 +532,7 @@ export default function Home() {
       <Separator size="4" />
       <Box py="6">
         <Text align="center" size="1" color="gray" as="p">
-          Secure 256-bit SSL encryption. HealthSafe © 2024
+          Secure 256-bit SSL encryption. HealthSafe © {new Date().getFullYear()}
         </Text>
       </Box>
     </Container>

@@ -19,6 +19,8 @@ export const metadata: Metadata = {
   description: "Secure and easy health insurance payment system",
 };
 
+import Providers from "./providers";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,13 +31,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        <Theme
-          accentColor="blue"
-          grayColor="slate"
-          panelBackground="translucent"
-        >
-          {children}
-        </Theme>
+        <Providers>
+          <Theme
+            accentColor="blue"
+            grayColor="slate"
+            panelBackground="translucent"
+          >
+            {children}
+          </Theme>
+        </Providers>
       </body>
     </html>
   );

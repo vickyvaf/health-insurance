@@ -45,6 +45,17 @@ Gunakan opsi ini jika kamu ingin melakukan pengembangan pada kode secara langsun
 
 ---
 
+## 🗄️ Database Management
+Untuk melihat data transaksi secara langsung di database menggunakan GUI:
+
+1.  **Run Prisma Studio:**
+    ```bash
+    bun backend:db:studio
+    ```
+2.  **Akses GUI:** Buka [http://localhost:5555](http://localhost:5555) di browser Anda.
+
+---
+
 ## 📋 Useful Commands
 - `bun backend:db:migrate` - Menjalankan migrasi database Prisma.
 - `bun backend:db:studio` - Membuka GUI database (Prisma Studio).

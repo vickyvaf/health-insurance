@@ -10,7 +10,6 @@ import {
   Grid,
   Heading,
   Section,
-  Separator,
   Spinner,
   Text,
   TextField,
@@ -23,14 +22,14 @@ import { initialState, paymentReducer } from "./reducers/payment";
 const plans = [
   {
     name: "Basic",
-    price: 1500000,
+    price: 750000,
     description: "Perfect for individuals starting their insurance journey.",
     features: ["Outpatient Care", "Emergency Coverage", "Annual Checkup"],
     icon: <Icons.CheckCircledIcon />,
   },
   {
     name: "Standard",
-    price: 2500000,
+    price: 2250000,
     description: "Our most comprehensive plan for complete protection.",
     popular: true,
     features: [
@@ -43,7 +42,7 @@ const plans = [
   },
   {
     name: "Premium",
-    price: 3500000,
+    price: 7500000,
     description: "Global coverage for you and your growing family.",
     features: [
       "Everything in Standard",
@@ -135,12 +134,12 @@ export default function Home() {
 
       // 1. Create Order
       const orderData = await createOrder({
-        productId: planIndex,
+        productId: planIndex + 1,
         amount: selectedPlanData.price,
       });
 
       // 2. Simulate Payment Provider Delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // 3. Trigger Webhook Simulation
       await triggerWebhook({
@@ -308,7 +307,7 @@ export default function Home() {
     );
   }
 
-  if (step === 'processing') {
+  if (step === "processing") {
     return (
       <Container size="2" p="4">
         <Section py="9">

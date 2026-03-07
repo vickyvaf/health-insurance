@@ -16,34 +16,48 @@ import {
   TextField,
 } from "@radix-ui/themes";
 import { useMutation } from "@tanstack/react-query";
-import { useReducer } from "react";
+import { useReducer, useRef } from "react";
 import { createOrder, triggerWebhook } from "./api/client";
 import { initialState, paymentReducer } from "./reducers/payment";
 
 const plans = [
   {
     name: "Basic",
-    price: 750000,
-    description: "Essential coverage for individuals.",
-    icon: <Icons.PersonIcon width="24" height="24" />,
+    price: 1500000,
+    description: "Perfect for individuals starting their insurance journey.",
+    features: ["Outpatient Care", "Emergency Coverage", "Annual Checkup"],
+    icon: <Icons.CheckCircledIcon />,
   },
   {
-    name: "Family",
-    price: 2250000,
-    description: "Comprehensive coverage for the whole family.",
+    name: "Standard",
+    price: 2500000,
+    description: "Our most comprehensive plan for complete protection.",
     popular: true,
-    icon: <Icons.FaceIcon width="24" height="24" />,
+    features: [
+      "Everything in Basic",
+      "Inpatient Care",
+      "Specialist Consultations",
+      "Prescription Drugs",
+    ],
+    icon: <Icons.CheckCircledIcon />,
   },
   {
-    name: "Executive",
-    price: 7500000,
-    description: "Premium coverage with exclusive perks.",
-    icon: <Icons.StarFilledIcon width="24" height="24" />,
+    name: "Premium",
+    price: 3500000,
+    description: "Global coverage for you and your growing family.",
+    features: [
+      "Everything in Standard",
+      "Global Coverage",
+      "Family Protection",
+      "Priority 24/7 Support",
+    ],
+    icon: <Icons.CheckCircledIcon />,
   },
 ];
 
 export default function Home() {
   const [state, dispatch] = useReducer(paymentReducer, initialState);
+  const checkoutRef = useRef<HTMLDivElement>(null);
 
   const {
     step,
@@ -110,6 +124,7 @@ export default function Home() {
   const handleReturnToDashboard = () => {
     dispatch({ type: "RESET_FORM" });
     paymentMutation.reset();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const paymentMutation = useMutation({
@@ -154,6 +169,13 @@ export default function Home() {
     paymentMutation.mutate();
   };
 
+  const scrollToCheckout = (planName?: string) => {
+    if (planName) {
+      dispatch({ type: "SET_SELECTED_PLAN", payload: planName });
+    }
+    checkoutRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const selectedPlanData =
     plans.find((p) => p.name === selectedPlan) || plans[1];
 
@@ -163,27 +185,27 @@ export default function Home() {
         <Section py="9">
           <Card
             size="4"
-            variant="surface"
-            className=" max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+            className="rounded-[32px] border-2 border-gray-50 overflow-hidden"
           >
-            <Flex direction="column" align="center" gap="5" p="5">
-              <Box
-                style={{
-                  backgroundColor: "var(--green-3)",
-                  padding: "16px",
-                  borderRadius: "100%",
-                  color: "var(--green-9)",
-                }}
-              >
-                <Icons.CheckCircledIcon width="48" height="48" />
+            <Flex direction="column" align="center" gap="8" p="8">
+              <Box className="bg-green-50 p-6 rounded-full text-green-600">
+                <Icons.CheckCircledIcon width="64" height="64" />
               </Box>
 
-              <Flex direction="column" align="center" gap="2">
-                <Heading size="8" align="center">
+              <Flex direction="column" align="center" gap="3">
+                <Heading
+                  size="8"
+                  align="center"
+                  className="text-gray-900 font-extrabold"
+                >
                   Payment Successful
                 </Heading>
-                <Text align="center" color="gray" size="3">
-                  Your payment for <strong>HealthSafe {selectedPlan}</strong>{" "}
+                <Text
+                  color="gray"
+                  size="3"
+                  className="max-w-md mx-auto leading-relaxed text-center"
+                >
+                  Your payment for <strong>{selectedPlan} Plan</strong>{" "}
                   insurance has been successfully processed. Thank you for
                   choosing us.
                 </Text>
@@ -191,41 +213,39 @@ export default function Home() {
 
               <Card
                 variant="surface"
-                style={{ width: "100%", maxWidth: "400px" }}
+                className="w-full max-w-[400px] bg-gray-50 rounded-2xl p-6 border border-gray-100"
               >
                 <Flex direction="column" align="center" gap="1">
-                  <Text size="2" weight="medium" color="gray">
+                  <Text
+                    size="1"
+                    weight="bold"
+                    className="uppercase tracking-widest text-gray-400"
+                  >
                     Transaction ID
                   </Text>
                   <Text
                     size="2"
                     weight="bold"
-                    align="center"
-                    style={{
-                      fontFamily: "monospace",
-                      wordBreak: "break-all",
-                    }}
+                    className="font-mono text-gray-900 break-all"
                   >
                     {transactionId || "HS-987654321"}
                   </Text>
                 </Flex>
               </Card>
 
-              <Flex direction="column" gap="3" width="100%" maxWidth="400px">
+              <Flex direction="column" gap="4" width="100%" maxWidth="400px">
                 <Button
-                  size="3"
-                  variant="solid"
-                  highContrast
-                  style={{ width: "100%" }}
+                  size="4"
+                  className="w-full bg-blue-600 text-white font-bold h-14 rounded-2xl shadow-xl shadow-blue-100 cursor-pointer"
                 >
                   <Icons.DownloadIcon />
                   Download Receipt
                 </Button>
                 <Button
-                  size="3"
+                  size="4"
                   variant="outline"
-                  style={{ width: "100%" }}
                   onClick={handleReturnToDashboard}
+                  className="w-full h-14 rounded-2xl font-bold cursor-pointer"
                 >
                   Return to Dashboard
                   <Icons.ArrowRightIcon />
@@ -244,42 +264,43 @@ export default function Home() {
         <Section py="9">
           <Card
             size="4"
-            className="max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+            className="rounded-[32px] border-2 border-gray-50 overflow-hidden"
           >
-            <Flex direction="column" align="center" gap="5" p="5">
-              <Box
-                style={{
-                  backgroundColor: "var(--red-3)",
-                  padding: "16px",
-                  borderRadius: "100%",
-                  color: "var(--red-9)",
-                }}
-              >
-                <Icons.ExclamationTriangleIcon width="48" height="48" />
+            <Flex direction="column" align="center" gap="8" p="8">
+              <Box className="bg-red-50 p-6 rounded-full text-red-600">
+                <Icons.ExclamationTriangleIcon width="64" height="64" />
               </Box>
 
-              <Flex direction="column" align="center" gap="2">
-                <Heading size="8" align="center" color="red">
+              <Flex direction="column" align="center" gap="3">
+                <Heading
+                  size="8"
+                  align="center"
+                  className="text-red-600 font-extrabold"
+                >
                   Payment Failed
                 </Heading>
-                <Text align="center" color="gray" size="3">
+                <Text
+                  color="gray"
+                  size="3"
+                  className="max-w-md mx-auto leading-relaxed text-center"
+                >
                   {(paymentMutation.error as Error)?.message ||
                     "We encountered an issue while processing your payment. Please check your details and try again."}
                 </Text>
               </Flex>
 
-              <Box width="100%" maxWidth="400px" mt="2">
-                <Button
-                  size="3"
-                  variant="solid"
-                  color="gray"
-                  style={{ width: "100%" }}
-                  onClick={handleReturnToDashboard}
-                >
-                  <Icons.ArrowLeftIcon />
-                  Return to Payment Details
-                </Button>
-              </Box>
+              <Button
+                size="4"
+                color="gray"
+                highContrast
+                onClick={() =>
+                  dispatch({ type: "SET_STEP", payload: "selection" })
+                }
+                className="h-14 rounded-2xl font-bold cursor-pointer"
+              >
+                <Icons.ArrowLeftIcon />
+                Return to Payment Details
+              </Button>
             </Flex>
           </Card>
         </Section>
@@ -287,41 +308,53 @@ export default function Home() {
     );
   }
 
-  if (step === "processing") {
+  if (step === 'processing') {
     return (
       <Container size="2" p="4">
         <Section py="9">
           <Card
             size="4"
-            className="max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
+            className="rounded-[32px] border-2 border-gray-50 overflow-hidden"
           >
-            <Flex direction="column" align="center" gap="5">
-              <Heading size="7">Processing Payment</Heading>
-              <Text size="2" color="gray" mb="4">
-                Please do not close or refresh this window.
-              </Text>
-
-              <Flex direction="column" align="center" gap="3" py="6">
-                <Spinner size="3" />
-                <Text size="2" weight="medium">
-                  Contacting your bank...
+            <Flex direction="column" align="center" gap="8" p="8">
+              <Box className="text-center">
+                <Heading size="7" mb="2" className="text-gray-900">
+                  Processing Payment
+                </Heading>
+                <Text size="2" color="gray">
+                  Please do not close or refresh this window.
                 </Text>
+              </Box>
+
+              <Flex direction="column" align="center" py="9" gap="3">
+                <Spinner size="3" />
+                <Text className="animate-pulse">Contacting your bank...</Text>
               </Flex>
 
-              <Box width="100%" style={{ opacity: 0.5, pointerEvents: "none" }}>
+              <Card className="w-full bg-gray-50 rounded-2xl p-6 opacity-50 grayscale pointer-events-none border-none">
                 <Flex direction="column" gap="4">
-                  <Flex direction="column" gap="2">
-                    <Text size="2" weight="bold">
+                  <Box className="space-y-2">
+                    <Text
+                      size="1"
+                      weight="bold"
+                      className="uppercase tracking-widest text-gray-400"
+                    >
                       Card Information
                     </Text>
-                    <TextField.Root disabled placeholder="**** **** **** 1234">
-                      <TextField.Slot>
-                        <Icons.CardStackIcon />
-                      </TextField.Slot>
-                    </TextField.Root>
-                  </Flex>
+                    <Card
+                      variant="surface"
+                      className="w-full bg-white rounded-xl p-3 border-gray-100"
+                    >
+                      <Flex align="center" gap="3">
+                        <Icons.CardStackIcon className="text-gray-300" />
+                        <Text className="text-gray-300 font-medium">
+                          **** **** **** 1234
+                        </Text>
+                      </Flex>
+                    </Card>
+                  </Box>
                 </Flex>
-              </Box>
+              </Card>
             </Flex>
           </Card>
         </Section>
@@ -330,211 +363,674 @@ export default function Home() {
   }
 
   return (
-    <Container size="3" p="4">
-      <Section
-        py={{
-          initial: "4",
-          md: "8",
-        }}
-      >
-        <Flex direction="column" gap="8">
-          <Box>
-            <Heading size="8" mb="6">
-              Select a Plan
-            </Heading>
-            <Grid columns={{ initial: "1", md: "3" }} gap="6" align="stretch">
-              {plans.map((plan) => (
-                <Card
-                  key={plan.name}
-                  size="3"
-                  variant="surface"
-                  style={{
-                    cursor: "pointer",
-                    position: "relative",
-                    transition: "all 0.2s ease-in-out",
-                    outline:
-                      selectedPlan === plan.name
-                        ? "2px solid var(--blue-9)"
-                        : "none",
-                    outlineOffset: "2px",
-                    height: "100%",
-                    overflow: "visible",
-                  }}
-                  onClick={() =>
-                    dispatch({ type: "SET_SELECTED_PLAN", payload: plan.name })
-                  }
+    <Box className="min-h-screen bg-white font-sans selection:bg-blue-100 overflow-x-hidden">
+      {/* Hero Section */}
+      <Section className="relative pt-20 pb-16 md:pt-32 md:pb-32 overflow-hidden">
+        <Container size="4" className="relative z-10 px-6">
+          <Flex direction={{ initial: "column", md: "row" }} align="center">
+            <Box className="w-full md:w-1/2 mb-12 md:mb-0">
+              <Flex
+                align="center"
+                gap="2"
+                className="bg-blue-50 px-3 py-1 rounded-full mb-6 w-fit"
+              >
+                <Box className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
+                <Text className="text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                  Digital-First Healthcare
+                </Text>
+              </Flex>
+              <Heading
+                as="h1"
+                size="9"
+                className="font-extrabold text-[#111827] leading-[1.1]"
+                mb="3"
+              >
+                Simple Health Insurance. <br />
+                <Text color="blue">Instant Protection.</Text>
+              </Heading>
+              <Text
+                as="p"
+                size="4"
+                className="text-gray-500 max-w-lg leading-relaxed block"
+                mb="6"
+              >
+                Buy affordable health insurance plans in minutes with secure
+                online payments. No paperwork, no wait times, just instant peace
+                of mind.
+              </Text>
+              <Flex direction={{ initial: "column", sm: "row" }} gap="4" mb="7">
+                <Button
+                  size="4"
+                  onClick={() => scrollToCheckout()}
+                  className="bg-blue-600 text-white font-bold h-14 px-8 rounded-xl shadow-lg shadow-blue-100 cursor-pointer"
                 >
-                  <Flex direction="column" gap="4" style={{ height: "100%" }}>
-                    <Flex justify="between" align="center">
-                      <Text color="blue">{plan.icon}</Text>
-                      <Heading size="4" color="gray">
-                        {plan.name}
-                      </Heading>
-                    </Flex>
+                  Get Insured Now
+                </Button>
+                <Button
+                  size="4"
+                  variant="outline"
+                  onClick={() =>
+                    document
+                      .getElementById("plans")
+                      ?.scrollIntoView({ behavior: "smooth" })
+                  }
+                  className="h-14 px-8 rounded-xl font-bold border-2 cursor-pointer"
+                >
+                  View Plans
+                </Button>
+              </Flex>
+              <Flex align="center" gap="4">
+                <Flex className="-space-x-3">
+                  {[1, 2, 3].map((i) => (
+                    <Box
+                      key={i}
+                      className="w-10 h-10 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center overflow-hidden"
+                    >
+                      <Box
+                        className={`w-full h-full ${
+                          i === 1
+                            ? "bg-orange-200"
+                            : i === 2
+                              ? "bg-orange-300"
+                              : "bg-orange-400"
+                        }`}
+                      />
+                    </Box>
+                  ))}
+                </Flex>
+                <Text className="text-sm text-gray-500">
+                  Trusted by over{" "}
+                  <Text weight="bold" className="text-gray-900">
+                    50,000+
+                  </Text>{" "}
+                  individuals in Indonesia.
+                </Text>
+              </Flex>
+            </Box>
 
-                    <Flex direction="column" gap="1">
-                      <Flex align="baseline" gap="1">
-                        <Text size="7" weight="bold">
-                          Rp {plan.price.toLocaleString("id-ID")}
-                        </Text>
-                        <Text size="2" color="gray">
-                          /mo
-                        </Text>
-                      </Flex>
-                      <Text size="2" color="gray">
-                        {plan.description}
-                      </Text>
+            <Box className="w-full md:w-1/2 relative">
+              <Box className="absolute -top-20 -right-20 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-50 -z-10" />
+              <Box className="bg-[#EEF4FF] p-8 md:p-12 rounded-[40px] shadow-sm">
+                <Card
+                  size="3"
+                  className="bg-white rounded-3xl shadow-xl p-8 max-w-sm mx-auto border-none"
+                >
+                  <Flex justify="between" align="start" mb="8">
+                    <Flex
+                      width="48px"
+                      height="48px"
+                      align="center"
+                      justify="center"
+                      className="bg-blue-50 rounded-xl text-blue-600"
+                    >
+                      <Icons.LockClosedIcon width="24" height="24" />
                     </Flex>
-
-                    <Box mt="auto" pt="4">
-                      <Button
-                        size="2"
-                        variant={
-                          selectedPlan === plan.name ? "solid" : "outline"
-                        }
-                        style={{ width: "100%" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          dispatch({
-                            type: "SET_SELECTED_PLAN",
-                            payload: plan.name,
-                          });
-                        }}
-                      >
-                        {selectedPlan === plan.name
-                          ? "Selected"
-                          : "Select Plan"}
-                      </Button>
+                    <Box className="px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-bold uppercase tracking-widest">
+                      Active
                     </Box>
                   </Flex>
+                  <Box mb="8">
+                    <Text className="text-[10px] text-gray-400 uppercase tracking-widest font-bold mb-1">
+                      Sample Digital Policy
+                    </Text>
+                    <Heading size="5" className="font-extrabold text-gray-900">
+                      Standard Health Plan
+                    </Heading>
+                  </Box>
+                  <Flex direction="column" gap="4" mb="8">
+                    <Flex justify="between">
+                      <Text size="2" color="gray" weight="medium">
+                        Coverage Limit
+                      </Text>
+                      <Text
+                        size="2"
+                        color="gray"
+                        weight="bold"
+                        className="text-gray-900"
+                      >
+                        Rp 500.000.000
+                      </Text>
+                    </Flex>
+                    <Flex justify="between">
+                      <Text size="2" color="gray" weight="medium">
+                        Premium
+                      </Text>
+                      <Text
+                        size="2"
+                        color="gray"
+                        weight="bold"
+                        className="text-gray-900"
+                      >
+                        Rp 2.500.000/yr
+                      </Text>
+                    </Flex>
+                    <Flex justify="between">
+                      <Text size="2" color="gray" weight="medium">
+                        Status
+                      </Text>
+                      <Text size="2" color="blue" weight="bold">
+                        Fully Insured
+                      </Text>
+                    </Flex>
+                  </Flex>
+                  <Box className="relative w-full h-12 bg-gray-50 rounded-xl flex items-center justify-center border border-dashed border-gray-200">
+                    <Box className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-16 h-4 bg-gray-200 rounded-full" />
+                  </Box>
                 </Card>
-              ))}
-            </Grid>
+                <Flex
+                  direction="column"
+                  gap="2"
+                  className="absolute bottom-4 right-4 md:bottom-10 md:right-10 bg-[#1669FF] text-white p-5 rounded-[24px] shadow-2xl min-w-[140px]"
+                >
+                  <Box className="relative w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                    <Icons.LightningBoltIcon
+                      width="20"
+                      height="20"
+                      className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2"
+                    />
+                  </Box>
+                  <Box mt="2">
+                    <Text className="text-[9px] text-white/80 font-extrabold uppercase tracking-widest block mb-1">
+                      Approval Time
+                    </Text>
+                    <Text
+                      size="4"
+                      weight="bold"
+                      className="leading-tight block"
+                    >
+                      Under 2 minutes
+                    </Text>
+                  </Box>
+                </Flex>
+              </Box>
+            </Box>
+          </Flex>
+        </Container>
+      </Section>
+
+      {/* How It Works Section */}
+      <Section className="py-24 bg-gray-50">
+        <Container size="4" className="px-6">
+          <Box className="text-center max-w-2xl mx-auto mb-16">
+            <Heading size="8" mb="4" className="text-gray-900 font-extrabold">
+              How It Works
+            </Heading>
+            <Text color="gray" size="3">
+              Getting protected is easier than ever with our digital-first
+              approach.
+            </Text>
+          </Box>
+          <Grid columns={{ initial: "1", md: "3" }} gap="9">
+            {[
+              {
+                title: "Choose Plan",
+                desc: "Select the coverage that fits your lifestyle and budget from our curated range.",
+                icon: <Icons.MixerHorizontalIcon width="32" height="32" />,
+              },
+              {
+                title: "Secure Payment",
+                desc: "Pay safely using our encrypted fintech-grade gateway with multiple options.",
+                icon: <Icons.LockClosedIcon width="32" height="32" />,
+              },
+              {
+                title: "Instant Confirmation",
+                desc: "Receive your digital policy instantly via email and through our dedicated app.",
+                icon: <Icons.EnvelopeClosedIcon width="32" height="32" />,
+              },
+            ].map((item, i) => (
+              <Flex key={i} direction="column" align="center">
+                <Box className="relative w-20 h-20 bg-white shadow-md rounded-[24px] mb-8 text-blue-600">
+                  <Box className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                    {item.icon}
+                  </Box>
+                </Box>
+                <Heading
+                  size="5"
+                  align="center"
+                  mb="3"
+                  className="text-gray-900 font-bold"
+                >
+                  {item.title}
+                </Heading>
+                <Text
+                  size="2"
+                  color="gray"
+                  align="center"
+                  className="leading-relaxed px-4"
+                >
+                  {item.desc}
+                </Text>
+              </Flex>
+            ))}
+          </Grid>
+        </Container>
+      </Section>
+
+      {/* Insurance Plans Section */}
+      <Section id="plans" className="py-24 bg-white">
+        <Container size="4" className="px-6">
+          <Box mb="9">
+            <Heading size="8" mb="2" className="text-gray-900 font-extrabold">
+              Insurance Plans
+            </Heading>
+            <Text color="gray" size="3">
+              Transparent pricing. No hidden fees.
+            </Text>
+          </Box>
+          <Grid columns={{ initial: "1", md: "3" }} gap="8" align="stretch">
+            {plans.map((plan) => (
+              <Card
+                key={plan.name}
+                size="4"
+                className={`flex flex-col rounded-[32px] p-8 transition-all relative cursor-pointer ${
+                  plan.popular
+                    ? "bg-white border-[3px] border-blue-600 shadow-2xl scale-105 z-10"
+                    : "bg-white border-2 border-gray-50 shadow-sm"
+                }`}
+                onClick={() =>
+                  dispatch({ type: "SET_SELECTED_PLAN", payload: plan.name })
+                }
+              >
+                <Flex direction="column" gap="6" className="h-full">
+                  <Box>
+                    <Heading
+                      size="6"
+                      weight="bold"
+                      mb="5"
+                      className="text-gray-900"
+                    >
+                      {plan.name}
+                    </Heading>
+                    <Flex align="baseline" gap="1" mb="3">
+                      <Text className="text-3xl font-extrabold text-gray-900">
+                        Rp {plan.price.toLocaleString("id-ID")}
+                      </Text>
+                      <Text size="2" color="gray" weight="medium">
+                        /yr
+                      </Text>
+                    </Flex>
+                    <Text
+                      size="1"
+                      color="gray"
+                      weight="medium"
+                      className="leading-relaxed"
+                    >
+                      {plan.description}
+                    </Text>
+                  </Box>
+                  <Flex direction="column" gap="4" flexGrow="1">
+                    {plan.features.map((feat, idx) => (
+                      <Flex key={idx} align="center" gap="3">
+                        <Box className="text-blue-600 flex-shrink-0">
+                          <Icons.CheckCircledIcon />
+                        </Box>
+                        <Text
+                          size="1"
+                          weight="medium"
+                          className="text-gray-600"
+                        >
+                          {feat}
+                        </Text>
+                      </Flex>
+                    ))}
+                  </Flex>
+                  <Button
+                    size="4"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      scrollToCheckout(plan.name);
+                    }}
+                    className={`w-full h-14 rounded-xl font-bold transition-all cursor-pointer ${
+                      plan.name === selectedPlan
+                        ? "bg-blue-600 text-white shadow-lg shadow-blue-100"
+                        : "bg-gray-50 text-gray-900"
+                    }`}
+                  >
+                    Buy Plan
+                  </Button>
+                </Flex>
+              </Card>
+            ))}
+          </Grid>
+        </Container>
+      </Section>
+
+      {/* Checkout Section */}
+      <Section
+        ref={checkoutRef}
+        className="py-24 bg-white border-t border-gray-50"
+      >
+        <Container size="3" className="px-6">
+          <Box className="text-center mb-16">
+            <Heading size="8" mb="4" className="text-gray-900 font-extrabold">
+              Complete Your Purchase
+            </Heading>
+            <Text color="gray" size="3">
+              You have selected the{" "}
+              <Text weight="bold" className="text-blue-600">
+                {selectedPlan} Plan
+              </Text>
+            </Text>
           </Box>
 
-          <Separator size="4" />
-
-          <Box>
-            <Heading size="8" mb="6">
-              Checkout Details
-            </Heading>
-            <Card
-              size="4"
-              className="max-md:border-none! max-md:bg-transparent! max-md:shadow-none!"
-            >
-              <form onSubmit={handlePay}>
-                <Flex direction="column" gap="5">
-                  <Grid columns={{ initial: "1", md: "2" }} gap="5">
-                    <Flex direction="column" gap="2">
-                      <Text size="2" weight="bold">
-                        Full Name
-                      </Text>
-                      <TextField.Root
-                        required
-                        placeholder="e.g. John Doe"
-                        size="3"
-                        value={fullName}
-                        onChange={(e) =>
-                          dispatch({
-                            type: "SET_FULL_NAME",
-                            payload: e.target.value,
-                          })
-                        }
-                      />
-                    </Flex>
-                    <Flex direction="column" gap="2">
-                      <Text size="2" weight="bold">
-                        Email Address
-                      </Text>
-                      <TextField.Root
-                        required
-                        type="email"
-                        placeholder="e.g. john@example.com"
-                        size="3"
-                        value={email}
-                        onChange={(e) =>
-                          dispatch({
-                            type: "SET_EMAIL",
-                            payload: e.target.value,
-                          })
-                        }
-                      />
-                    </Flex>
-                  </Grid>
-
-                  <Flex direction="column" gap="2">
-                    <Text size="2" weight="bold">
-                      Card Number
+          <Card
+            size="4"
+            className="bg-white border-2 border-gray-50 rounded-[32px] p-8 md:p-12 shadow-2xl shadow-gray-100"
+          >
+            <form onSubmit={handlePay}>
+              <Flex direction="column" gap="8">
+                <Grid columns={{ initial: "1", md: "2" }} gap="6">
+                  <Flex direction="column" gap="1">
+                    <Text
+                      size="1"
+                      weight="bold"
+                      className="uppercase tracking-widest text-gray-400 px-1 block"
+                    >
+                      Full Name
                     </Text>
                     <TextField.Root
                       required
                       size="3"
-                      value={cardNumber}
-                      onChange={handleCardNumberChange}
-                      placeholder="0000 0000 0000 0000"
+                      placeholder="e.g. John Doe"
+                      className="h-14 rounded-2xl border-none bg-gray-50 focus-within:bg-white transition-all shadow-none"
+                      value={fullName}
+                      onChange={(e) =>
+                        dispatch({
+                          type: "SET_FULL_NAME",
+                          payload: e.target.value,
+                        })
+                      }
+                    />
+                  </Flex>
+                  <Flex direction="column" gap="1">
+                    <Text
+                      size="1"
+                      weight="bold"
+                      className="uppercase tracking-widest text-gray-400 px-1 block"
                     >
-                      <TextField.Slot>
-                        <Icons.CardStackIcon />
-                      </TextField.Slot>
-                    </TextField.Root>
-                  </Flex>
-
-                  <Grid columns="2" gap="5">
-                    <Flex direction="column" gap="2">
-                      <Text size="2" weight="bold">
-                        Expiry Date
-                      </Text>
-                      <TextField.Root
-                        required
-                        size="3"
-                        value={expiryDate}
-                        onChange={handleExpiryDateChange}
-                        placeholder="MM/YY"
-                      />
-                    </Flex>
-                    <Flex direction="column" gap="2">
-                      <Text size="2" weight="bold">
-                        CVV
-                      </Text>
-                      <TextField.Root
-                        required
-                        size="3"
-                        value={cvv}
-                        onChange={handleCvvChange}
-                        placeholder="123"
-                        maxLength={3}
-                      />
-                    </Flex>
-                  </Grid>
-
-                  <Box pt="4">
-                    <Button size="3" style={{ width: "100%" }} type="submit">
-                      <Icons.LockClosedIcon />
-                      Pay Rp {selectedPlanData.price.toLocaleString(
-                        "id-ID",
-                      )}{" "}
-                      Now
-                    </Button>
-                  </Box>
-
-                  <Flex justify="center" align="center" gap="1">
-                    <Icons.LockClosedIcon color="gray" />
-                    <Text size="1" color="gray">
-                      Payments are secure and encrypted.
+                      Email Address
                     </Text>
+                    <TextField.Root
+                      required
+                      type="email"
+                      size="3"
+                      placeholder="e.g. john@example.com"
+                      className="h-14 rounded-2xl border-none bg-gray-50 focus-within:bg-white transition-all shadow-none"
+                      value={email}
+                      onChange={(e) =>
+                        dispatch({ type: "SET_EMAIL", payload: e.target.value })
+                      }
+                    />
                   </Flex>
+                </Grid>
+
+                <Flex direction="column" gap="1">
+                  <Text
+                    size="1"
+                    weight="bold"
+                    className="uppercase tracking-widest text-gray-400 px-1 block"
+                  >
+                    Card Number
+                  </Text>
+                  <TextField.Root
+                    required
+                    size="3"
+                    className="h-14 rounded-2xl border-none bg-gray-50 focus-within:bg-white transition-all shadow-none"
+                    value={cardNumber}
+                    onChange={handleCardNumberChange}
+                    placeholder="0000 0000 0000 0000"
+                  >
+                    <TextField.Slot>
+                      <Icons.CardStackIcon width="20" height="20" />
+                    </TextField.Slot>
+                  </TextField.Root>
                 </Flex>
-              </form>
-            </Card>
-          </Box>
-        </Flex>
+
+                <Grid columns="2" gap="6">
+                  <Flex direction="column" gap="1">
+                    <Text
+                      size="1"
+                      weight="bold"
+                      className="uppercase tracking-widest text-gray-400 px-1 block"
+                    >
+                      Expiry Date
+                    </Text>
+                    <TextField.Root
+                      required
+                      size="3"
+                      placeholder="MM/YY"
+                      className="h-14 rounded-2xl border-none bg-gray-50 focus-within:bg-white transition-all shadow-none"
+                      value={expiryDate}
+                      onChange={handleExpiryDateChange}
+                    />
+                  </Flex>
+                  <Flex direction="column" gap="1">
+                    <Text
+                      size="1"
+                      weight="bold"
+                      className="uppercase tracking-widest text-gray-400 px-1 block"
+                    >
+                      CVV
+                    </Text>
+                    <TextField.Root
+                      required
+                      size="3"
+                      placeholder="123"
+                      className="h-14 rounded-2xl border-none bg-gray-50 focus-within:bg-white transition-all shadow-none"
+                      value={cvv}
+                      onChange={handleCvvChange}
+                      maxLength={3}
+                    />
+                  </Flex>
+                </Grid>
+
+                <Button
+                  size="4"
+                  type="submit"
+                  className="w-full h-16 bg-blue-600 text-white font-extrabold rounded-2xl shadow-xl shadow-blue-100 cursor-pointer"
+                >
+                  <Icons.LockClosedIcon className="hidden md:block" />
+                  <span>
+                    Pay Rp {selectedPlanData.price.toLocaleString("id-ID")} Now
+                  </span>
+                </Button>
+
+                <Flex
+                  justify="center"
+                  align="center"
+                  gap="2"
+                  className="text-gray-400"
+                >
+                  <Icons.LockClosedIcon
+                    width="14"
+                    height="14"
+                    className="hidden md:block"
+                  />
+                  <Text
+                    size="1"
+                    weight="bold"
+                    className="uppercase tracking-widest"
+                  >
+                    Payments are secure and 256-bit encrypted
+                  </Text>
+                </Flex>
+              </Flex>
+            </form>
+          </Card>
+        </Container>
       </Section>
-      <Separator size="4" />
-      <Box py="6">
-        <Text align="center" size="1" color="gray" as="p">
-          Secure 256-bit SSL encryption. HealthSafe © {new Date().getFullYear()}
-        </Text>
+
+      {/* Fintech Section */}
+      <Section className="py-24 bg-[#0B1121] text-white">
+        <Container size="4" className="px-6 text-center">
+          <Flex
+            justify="center"
+            gap="9"
+            mb="9"
+            className="opacity-50 grayscale invert flex-wrap"
+          >
+            <Flex align="center" gap="2">
+              <Icons.LockClosedIcon width="16" height="16" />
+              <Text
+                size="1"
+                weight="bold"
+                className="uppercase tracking-widest"
+              >
+                AES-256 Encrypted
+              </Text>
+            </Flex>
+            <Flex align="center" gap="2">
+              <Icons.TargetIcon width="16" height="16" />
+              <Text
+                size="1"
+                weight="bold"
+                className="uppercase tracking-widest"
+              >
+                PCI-DSS Compliant
+              </Text>
+            </Flex>
+            <Flex align="center" gap="2">
+              <Icons.GlobeIcon width="16" height="16" />
+              <Text
+                size="1"
+                weight="bold"
+                className="uppercase tracking-widest"
+              >
+                Bank-Grade Tech
+              </Text>
+            </Flex>
+          </Flex>
+          <Heading size="8" mb="6" className="font-extrabold">
+            Secure Fintech Payments
+          </Heading>
+          <Text
+            size="3"
+            color="gray"
+            className="max-w-2xl mx-auto mb-12 leading-relaxed block"
+          >
+            We use bank-level encryption and secure payment gateways to ensure
+            your transactions and personal data are always protected. Experience
+            instant confirmation with zero friction.
+          </Text>
+          <Flex justify="center" gap="4">
+            {[1, 2, 3, 4].map((i) => (
+              <Box
+                key={i}
+                className="relative w-12 h-12 bg-white/5 rounded-xl border border-white/10"
+              >
+                <Box className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-6 h-2 bg-white/20 rounded-full" />
+              </Box>
+            ))}
+          </Flex>
+        </Container>
+      </Section>
+
+      {/* Footer */}
+      <Box className="py-20 bg-white border-t border-gray-50">
+        <Container size="4" className="px-6">
+          <Grid columns={{ initial: "1", md: "4" }} gap="9" mb="9">
+            <Flex direction="column" gap="6">
+              <Flex align="center" gap="2">
+                <Box className="relative w-8 h-8 bg-blue-600 rounded-lg text-white">
+                  <Icons.PlusIcon className="absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2" />
+                </Box>
+                <Text size="5" weight="bold" className="text-[#111827]">
+                  InsureHealth
+                </Text>
+              </Flex>
+              <Text size="2" color="gray" className="leading-relaxed">
+                Making quality healthcare accessible and affordable through
+                digital innovation.
+              </Text>
+            </Flex>
+            <Box>
+              <Heading
+                size="1"
+                weight="bold"
+                className="uppercase tracking-widest text-gray-900"
+                mb="6"
+              >
+                Product
+              </Heading>
+              <Box className="space-y-4 list-none p-0">
+                {["Basic Plan", "Standard Plan", "Premium Plan"].map((item) => (
+                  <Box key={item}>
+                    <Text
+                      size="1"
+                      weight="medium"
+                      color="gray"
+                      className="cursor-pointer"
+                    >
+                      {item}
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            <Box>
+              <Heading
+                size="1"
+                weight="bold"
+                className="uppercase tracking-widest text-gray-900"
+                mb="6"
+              >
+                Company
+              </Heading>
+              <Box className="space-y-4 list-none p-0">
+                {["About Us", "Contact", "Careers"].map((item) => (
+                  <Box key={item}>
+                    <Text
+                      size="1"
+                      weight="medium"
+                      color="gray"
+                      className="cursor-pointer"
+                    >
+                      {item}
+                    </Text>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+            <Box>
+              <Heading
+                size="1"
+                weight="bold"
+                className="uppercase tracking-widest text-gray-900"
+                mb="6"
+              >
+                Legal
+              </Heading>
+              <Box className="space-y-4 list-none p-0">
+                {["Terms of Service", "Privacy Policy", "Cookie Policy"].map(
+                  (item) => (
+                    <Box key={item}>
+                      <Text
+                        size="1"
+                        weight="medium"
+                        color="gray"
+                        className="cursor-pointer"
+                      >
+                        {item}
+                      </Text>
+                    </Box>
+                  ),
+                )}
+              </Box>
+            </Box>
+          </Grid>
+          <Box className="pt-12 border-t border-gray-50">
+            <Text size="1" color="gray" className="mb-6 leading-relaxed block">
+              Disclaimer: InsureHealth is a digital insurance broker registered
+              and supervised by OJK. All insurance products are underwritten by
+              licensed insurance carriers. Coverage is subject to the terms and
+              conditions of the specific policy selected.
+            </Text>
+            <Text size="1" color="gray">
+              © {new Date().getFullYear()} InsureHealth. All rights reserved.
+            </Text>
+          </Box>
+        </Container>
       </Box>
-    </Container>
+    </Box>
   );
 }

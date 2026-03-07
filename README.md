@@ -1,19 +1,19 @@
 # 🚀 InsureHealth
 
-**InsureHealth** adalah platform asuransi kesehatan digital yang mengintegrasikan alur pembayaran dengan sistem **Double-Entry Ledger** internal untuk menjamin akurasi finansial dan transparansi data transaksi.
+**InsureHealth** is a digital health insurance platform that integrates payment flows with an internal **Double-Entry Ledger** system to ensure financial accuracy and transaction data transparency.
 
 ## 📖 How to Run
-Panduan cara menjalankan sistem asuransi kesehatan (Frontend & Backend).
+Guide on how to run the health insurance system (Frontend & Backend).
 
 ## 🛠 Prerequisites
-Pastikan kamu sudah menginstal:
-- **Docker Desktop** (Paling direkomendasikan)
-- **Bun Runtime** (Jika ingin menjalankan secara manual)
+Ensure you have installed:
+- **Docker Desktop** (Highly recommended)
+- **Bun Runtime** (If you want to run manually)
 
 ---
 
 ## 🐳 Option 1: Run with Docker (Recommended)
-Cara termudah untuk menjalankan seluruh environment (Frontend, Backend, DB, dan Redis) sekaligus.
+The easiest way to run the entire environment (Frontend, Backend, DB, and Redis) at once.
 
 1.  **Start all services:**
     ```bash
@@ -27,7 +27,7 @@ Cara termudah untuk menjalankan seluruh environment (Frontend, Backend, DB, dan 
 ---
 
 ## 💻 Option 2: Run Locally (Manual Development)
-Gunakan opsi ini jika kamu ingin melakukan pengembangan pada kode secara langsung.
+Use this option if you want to perform code development directly.
 
 1.  **Start Database & Redis only:**
     ```bash
@@ -46,18 +46,18 @@ Gunakan opsi ini jika kamu ingin melakukan pengembangan pada kode secara langsun
 ---
 
 ## 🗄️ Database Management
-Untuk melihat data transaksi secara langsung di database menggunakan GUI:
+To view transaction data directly in the database using a GUI:
 
 1.  **Run Prisma Studio:**
     ```bash
     bun backend:db:studio
     ```
-2.  **Akses GUI:** Buka [http://localhost:5555](http://localhost:5555) di browser Anda.
+2.  **Access GUI:** Open [http://localhost:5555](http://localhost:5555) in your browser.
 
 ---
 
 ## 📋 Useful Commands
-- `bun backend:db:migrate` - Menjalankan migrasi database Prisma.
-- `bun backend:db:studio` - Membuka GUI database (Prisma Studio).
-- `docker compose logs -f` - Melihat log real-time dari container.
-- `docker compose down` - Mematikan semua layanan Docker.
+- `bun backend:db:migrate` - Run Prisma database migrations.
+- `bun backend:db:studio` - Open the database GUI (Prisma Studio).
+- `docker compose logs -f` - View real-time logs from containers.
+- `docker compose down` - Shut down all Docker services.
